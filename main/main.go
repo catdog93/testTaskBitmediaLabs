@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"log"
-	"testTaskBitmediaLabs/controllers"
+	"testTaskBitmediaLabs/controller"
 	//"testTaskBitmediaLabs/data"
 	//rep "testTaskBitmediaLabs/repository"
 )
@@ -25,11 +25,11 @@ func main() {
 // map handlers with endpoints
 func CreateUrlMapping() {
 	router = gin.Default()
-	routerGroup := router.Group(controllers.RelativeUsersPath)
+	routerGroup := router.Group(controller.RelativeUsersPath)
 	{
-		routerGroup.POST(controllers.UsersPath, controllers.CreateUser)
-		routerGroup.GET(controllers.UsersPath, controllers.GetUsers)
-		routerGroup.GET(controllers.GetUserPath, controllers.GetUser)
-		routerGroup.PUT(controllers.UsersPath, controllers.ReplaceUser)
+		routerGroup.POST(controller.UsersPath, controller.CreateUser)
+		routerGroup.GET(controller.UsersPath, controller.GetUsers)
+		routerGroup.GET(controller.GetUserPath, controller.GetUser)
+		routerGroup.PUT(controller.UsersPath, controller.ReplaceUser)
 	}
 }
