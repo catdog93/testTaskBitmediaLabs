@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"strings"
 	"testTaskBitmediaLabs/entity"
-	"time"
 )
 
 const (
@@ -15,23 +14,20 @@ const (
 	genderMaxLength    = 10
 	stringFieldPattern = "^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z]*)*$"
 	emailPattern       = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
-	emailMinLength     = 16
-	emailMaxLength     = 60
-	birthDateFormat    = "Tuesday, February 9, 0388 2:03 PM"
+	emailMinLength     = 10
+	emailMaxLength     = 40
 )
 
 const (
-	emptyStringError     = "error: string field can't be empty"
-	lengthError          = "error: string field must has length between 2 to 40"
-	lastNameFormatError  = "error: lastName hasn't a valid format"
-	emailFormatError     = "error: email field should be a valid email address"
-	genderError          = "error: gender field requires such values \"Male\" or \"Female\""
-	birthDateFormatError = "error: birthDate hasn't a valid date format"
-	yearOfBirthError     = "error: year of birth isn't valid"
+	emptyStringError       = "error: string field can't be empty"
+	lengthError            = "error: string field has incorrect length"
+	stringFieldFormatError = "error: string field hasn't a valid format"
+	emailFormatError       = "error: email field should be a valid email address"
+	genderError            = "error: gender field requires such values \"Male\" or \"Female\""
 )
 
 func UserValidation(user entity.UserBody) error {
-	err := lastFieldValidation(user.LastName)
+	err := stringFieldValidation(user.LastName)
 	if err != nil {
 		return err
 	}
@@ -39,11 +35,11 @@ func UserValidation(user entity.UserBody) error {
 	if err != nil {
 		return err
 	}
-	err = lastFieldValidation(user.Country)
+	err = stringFieldValidation(user.Country)
 	if err != nil {
 		return err
 	}
-	err = lastFieldValidation(user.City)
+	err = stringFieldValidation(user.City)
 	if err != nil {
 		return err
 	}
@@ -51,11 +47,10 @@ func UserValidation(user entity.UserBody) error {
 	if err != nil {
 		return err
 	}
-	err = birthdayValidation(user.BirthDate)
 	return err
 }
 
-func lastFieldValidation(lastName string) error {
+func stringFieldValidation(lastName string) error {
 	if lastName == "" {
 		return errors.New(emptyStringError)
 	}
@@ -65,7 +60,7 @@ func lastFieldValidation(lastName string) error {
 	}
 	regex := regexp.MustCompile(stringFieldPattern)
 	if !regex.MatchString(lastName) {
-		return errors.New(lastNameFormatError)
+		return errors.New(stringFieldFormatError)
 	}
 	return nil
 }
@@ -89,18 +84,6 @@ func emailValidation(email string) error {
 	regex := regexp.MustCompile(emailPattern)
 	if !regex.MatchString(email) {
 		return errors.New(emailFormatError)
-	}
-	return nil
-}
-
-func birthdayValidation(birthday string) error {
-	birthday = strings.TrimSpace(birthday)
-	d, err := time.Parse(birthDateFormat, birthday)
-	if err != nil {
-		return errors.New(birthDateFormatError)
-	}
-	if d.Year() < 1900 {
-		return errors.New(yearOfBirthError)
 	}
 	return nil
 }
