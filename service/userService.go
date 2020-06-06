@@ -9,12 +9,12 @@ import (
 
 const DBUri = "mongodb://localhost:2717"
 
-func GetUsersLimit(limit uint64) ([]entity.User, error) {
-	return rep.ReadUsers(limit)
+func GetUsersLimit(limit int64, pageNumber int64) (*[]entity.User, error) {
+	return rep.ReadUsersPagination(limit, pageNumber)
 }
 
-func GetUserById(id string) (*entity.User, error) {
-	return rep.ReadUser(id)
+func GetUserByID(id string) (*entity.User, error) {
+	return rep.ReadUserByID(id)
 }
 
 func CreateUser(user *entity.UserBody) (*primitive.ObjectID, error) {

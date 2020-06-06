@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	mongopagination "github.com/gobeam/mongo-go-pagination"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,19 +18,25 @@ const (
 	CollectionName = "users"
 )
 
-// When we have files with data that are too large it's better use mongoimport.
-func InsertUsers(docs []interface{}) error {
+var client *mongo.Client
+
+func ConnectDB(context *context.Context) error {
 	// Set client options
 	clientOptions := options.Client().ApplyURI(DBUri)
 	// Connect to MongoDB
-	client, err := mongo.Connect(context.TODO(), clientOptions)
+	_, err := mongo.Connect(*context, clientOptions)
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+// When we have JSON with data that are too large it's better use mongoimport.
+func InsertUsers(docs []interface{}) error {
 	collection := client.Database(DBName).Collection(CollectionName)
 
 	//unique index for Email field
-	_, err = collection.Indexes().CreateOne(
+	_, err := collection.Indexes().CreateOne(
 		context.Background(),
 		mongo.IndexModel{
 			Keys:    bsonx.Doc{{"email", bsonx.Int32(1)}},
@@ -41,58 +48,27 @@ func InsertUsers(docs []interface{}) error {
 	return err
 }
 
-func ReadUsers(limit uint64) ([]entity.User, error) {
-	// Set client options
-	clientOptions := options.Client().ApplyURI(DBUri)
-	// Connect to MongoDB
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-	if err != nil {
-		return nil, err
-	}
+func ReadUsersPagination(limit int64, page int64) (*[]entity.User, error) {
+	filter := bson.M{}
 	collection := client.Database(DBName).Collection(CollectionName)
 
-	// Pass these options to the Find method
-	findOptions := options.Find()
-	findOptions.SetLimit(int64(limit))
-
-	// Here's an array in which you can store the decoded documents
-	var results []entity.User
-
-	// Passing bson.D{{}} as the filter matches all documents in the collection
-	cur, err := collection.Find(context.TODO(), bson.D{{}}, findOptions)
+	// Querying paginated data
+	paginatedData, err := mongopagination.New(collection).Limit(limit).Page(page).Filter(filter).Find()
 	if err != nil {
 		return nil, err
 	}
-	// Close the cursor once finished
-	defer cur.Close(context.TODO())
-	// Finding multiple documents returns a cursor
-	// Iterating through the cursor allows us to decode documents one at a time
-	for cur.Next(context.TODO()) {
 
-		// create a value into which the single document can be decoded
-		var elem entity.User
-		err := cur.Decode(&elem)
-		if err != nil {
-			return nil, err
+	var users []entity.User
+	for _, raw := range paginatedData.Data {
+		var user *entity.User
+		if marshallErr := bson.Unmarshal(raw, &user); marshallErr == nil {
+			users = append(users, *user)
 		}
-
-		results = append(results, elem)
 	}
-
-	//if err := cur.Err(); err != nil {
-	//	log.Fatal(err)
-	//}
-	return results, nil
+	return &users, nil
 }
 
-func ReadUser(id string) (*entity.User, error) {
-	// Set client options
-	clientOptions := options.Client().ApplyURI(DBUri)
-	// Connect to MongoDB
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-	if err != nil {
-		return nil, err
-	}
+func ReadUserByID(id string) (*entity.User, error) {
 	collection := client.Database(DBName).Collection(CollectionName)
 
 	// Here's user decoded document
@@ -104,13 +80,6 @@ func ReadUser(id string) (*entity.User, error) {
 }
 
 func CreateUser(doc interface{}) (interface{}, error) {
-	// Set client options
-	clientOptions := options.Client().ApplyURI(DBUri)
-	// Connect to MongoDB
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-	if err != nil {
-		return nil, err
-	}
 	collection := client.Database(DBName).Collection(CollectionName)
 
 	result, err := collection.InsertOne(context.TODO(), doc)
@@ -120,16 +89,9 @@ func CreateUser(doc interface{}) (interface{}, error) {
 	return result.InsertedID, nil
 }
 
-func ReplaceUser(objId primitive.ObjectID, doc interface{}) error {
-	// Set client options
-	clientOptions := options.Client().ApplyURI(DBUri)
-	// Connect to MongoDB
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-	if err != nil {
-		return err
-	}
+func ReplaceUser(objectID primitive.ObjectID, doc interface{}) error {
 	collection := client.Database(DBName).Collection(CollectionName)
 
-	_, err = collection.ReplaceOne(context.TODO(), bson.M{"_id": objId}, doc)
+	_, err := collection.ReplaceOne(context.TODO(), bson.M{"_id": objectID}, doc)
 	return err
 }
