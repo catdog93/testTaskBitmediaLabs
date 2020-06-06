@@ -3,35 +3,24 @@ package main
 import (
 	"context"
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"log"
 	"testTaskBitmediaLabs/controller"
-	"time"
+	"testTaskBitmediaLabs/repository"
 	//"testTaskBitmediaLabs/data"
 	//rep "testTaskBitmediaLabs/repository"
 )
+
+const DBUri = "mongodb://localhost:27017"
 
 // gin http router
 var router *gin.Engine
 
 func main() {
-	// Set client options
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-
-	context, _ := context.WithTimeout(context.Background(), 2*time.Second)
-	// Connect to MongoDB
-	client, err := mongo.Connect(context, clientOptions)
-
+	ctx := repository.GetClient()
+	err := ctx.Ping(context.Background(), readpref.Primary())
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Check the connection
-	err = client.Ping(context, nil)
-
-	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Couldn't connect to the database", err)
 	}
 
 	// import users data to MongoDB
@@ -45,7 +34,7 @@ func main() {
 	//}
 
 	CreateUrlMapping()
-	err := router.Run() // listen and serve on localhost:8080
+	err = router.Run() // listen and serve on localhost:8080
 	if err != nil {
 		log.Fatal(err)
 	}

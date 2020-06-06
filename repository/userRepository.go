@@ -8,6 +8,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
+	"log"
+	"time"
+
 	//"log"
 	"testTaskBitmediaLabs/entity"
 )
@@ -18,22 +21,27 @@ const (
 	CollectionName = "users"
 )
 
-var client *mongo.Client
+var clientRepository *mongo.Client
 
-func ConnectDB(context *context.Context) error {
-	// Set client options
+// create one client for repository's crud operations
+func GetClient() *mongo.Client {
 	clientOptions := options.Client().ApplyURI(DBUri)
-	// Connect to MongoDB
-	_, err := mongo.Connect(*context, clientOptions)
+	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
-	return nil
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+	err = client.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	clientRepository = client
+	return client
 }
 
 // When we have JSON with data that are too large it's better use mongoimport.
 func InsertUsers(docs []interface{}) error {
-	collection := client.Database(DBName).Collection(CollectionName)
+	collection := clientRepository.Database(DBName).Collection(CollectionName)
 
 	//unique index for Email field
 	_, err := collection.Indexes().CreateOne(
@@ -50,7 +58,7 @@ func InsertUsers(docs []interface{}) error {
 
 func ReadUsersPagination(limit int64, page int64) (*[]entity.User, error) {
 	filter := bson.M{}
-	collection := client.Database(DBName).Collection(CollectionName)
+	collection := clientRepository.Database(DBName).Collection(CollectionName)
 
 	// Querying paginated data
 	paginatedData, err := mongopagination.New(collection).Limit(limit).Page(page).Filter(filter).Find()
@@ -68,19 +76,20 @@ func ReadUsersPagination(limit int64, page int64) (*[]entity.User, error) {
 	return &users, nil
 }
 
-func ReadUserByID(id string) (*entity.User, error) {
-	collection := client.Database(DBName).Collection(CollectionName)
+func ReadUserByID(id string) (entity.User, error) {
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	collection := clientRepository.Database(DBName).Collection(CollectionName)
 
 	// Here's user decoded document
 	var result entity.User
 
 	objectID, err := primitive.ObjectIDFromHex(id)
-	err = collection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&result)
-	return &result, err
+	err = collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&result)
+	return result, err
 }
 
 func CreateUser(doc interface{}) (interface{}, error) {
-	collection := client.Database(DBName).Collection(CollectionName)
+	collection := clientRepository.Database(DBName).Collection(CollectionName)
 
 	result, err := collection.InsertOne(context.TODO(), doc)
 	if err != nil {
@@ -90,7 +99,7 @@ func CreateUser(doc interface{}) (interface{}, error) {
 }
 
 func ReplaceUser(objectID primitive.ObjectID, doc interface{}) error {
-	collection := client.Database(DBName).Collection(CollectionName)
+	collection := clientRepository.Database(DBName).Collection(CollectionName)
 
 	_, err := collection.ReplaceOne(context.TODO(), bson.M{"_id": objectID}, doc)
 	return err

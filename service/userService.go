@@ -13,11 +13,11 @@ func GetUsersLimit(limit int64, pageNumber int64) (*[]entity.User, error) {
 	return rep.ReadUsersPagination(limit, pageNumber)
 }
 
-func GetUserByID(id string) (*entity.User, error) {
+func GetUserByID(id string) (entity.User, error) {
 	return rep.ReadUserByID(id)
 }
 
-func CreateUser(user *entity.UserBody) (*primitive.ObjectID, error) {
+func CreateUser(user entity.UserBody) (*primitive.ObjectID, error) {
 	var id primitive.ObjectID
 	objectID, err := rep.CreateUser(interface{}(user))
 	if err != nil {
@@ -32,7 +32,7 @@ func CreateUser(user *entity.UserBody) (*primitive.ObjectID, error) {
 	return &id, err
 }
 
-func ReplaceUser(user *entity.User) error {
+func ReplaceUser(user entity.User) error {
 	err := rep.ReplaceUser(user.ID, interface{}(user))
 	if err != nil {
 		return err

@@ -28,4 +28,19 @@ type Gender string
 const (
 	Male   Gender = "Male"
 	Female Gender = "Female"
+
+	MaleLower   Gender = "male"
+	FemaleLower Gender = "female"
 )
+
+func (user User) ConvertUserToUserBody() UserBody {
+	userBody := UserBody{
+		LastName:  user.LastName,
+		Gender:    user.Gender,
+		Country:   user.Country,
+		City:      user.City,
+		Email:     user.Email,
+		BirthDate: user.BirthDate,
+	}
+	return userBody
+}

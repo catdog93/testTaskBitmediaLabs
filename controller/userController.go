@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"testTaskBitmediaLabs/entity"
 	"testTaskBitmediaLabs/service"
+	"testTaskBitmediaLabs/validator"
 )
 
 const (
@@ -78,7 +79,12 @@ func CreateUser(context *gin.Context) {
 		context.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	id, err := service.CreateUser(&user)
+	err = validator.UserValidation(user)
+	if err != nil {
+		context.String(http.StatusBadRequest, err.Error())
+		return
+	}
+	id, err := service.CreateUser(user)
 	if err != nil {
 		context.String(http.StatusInternalServerError, err.Error())
 		return
@@ -94,7 +100,12 @@ func ReplaceUser(context *gin.Context) {
 		context.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	err = service.ReplaceUser(&user)
+	err = validator.UserValidation(user.ConvertUserToUserBody())
+	if err != nil {
+		context.String(http.StatusBadRequest, err.Error())
+		return
+	}
+	err = service.ReplaceUser(user)
 	if err != nil {
 		context.String(http.StatusInternalServerError, err.Error())
 		return
