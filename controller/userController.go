@@ -26,7 +26,7 @@ const (
 	limitError      = "error: incorrect limit value"
 )
 
-//users/
+//users/?limit=100&page=5
 func GetUsers(context *gin.Context) {
 	limit, err := strconv.Atoi(context.Query("limit"))
 	if err != nil {

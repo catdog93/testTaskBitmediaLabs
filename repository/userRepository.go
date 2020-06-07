@@ -1,7 +1,9 @@
+//	Use GetClient() before use any crud operation
 package repository
 
 import (
 	"context"
+	"errors"
 	mongopagination "github.com/gobeam/mongo-go-pagination"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -9,8 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
 	"log"
-	"time"
-
 	//"log"
 	"testTaskBitmediaLabs/entity"
 )
@@ -21,44 +21,68 @@ const (
 	CollectionName = "users"
 )
 
-var clientRepository *mongo.Client
+const (
+	nilContextError = "error: context can't be nil"
+	nilClientError  = "error: mongo client can't be nil"
+)
 
-// create one client for repository's crud operations
-func GetClient() *mongo.Client {
+var repositoryClient *mongo.Client
+var repositoryContext *context.Context
+
+//	Create single client and context instances for repository's crud operations
+func GetClient(ctx *context.Context) *mongo.Client {
 	clientOptions := options.Client().ApplyURI(DBUri)
 	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
 		log.Fatal(err)
 	}
-	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
-	err = client.Connect(ctx)
+	err = client.Connect(*ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	clientRepository = client
+	repositoryClient = client
+	repositoryContext = ctx
 	return client
 }
 
-// When we have JSON with data that are too large it's better use mongoimport.
-func InsertUsers(docs []interface{}) error {
-	collection := clientRepository.Database(DBName).Collection(CollectionName)
+func checkConnectionProperties() error {
+	if repositoryClient == nil {
+		return errors.New(nilContextError)
+	}
+	if repositoryContext == nil {
+		return errors.New(nilClientError)
+	}
+	return nil
+}
 
+//	Use GetClient() before use crud operation. When we have JSON with data that are too large it's better use mongoimport
+func InsertUsers(docs []interface{}) error {
+	err := checkConnectionProperties()
+	if err != nil {
+		return err
+	}
+	collection := repositoryClient.Database(DBName).Collection(CollectionName)
 	//unique index for Email field
-	_, err := collection.Indexes().CreateOne(
-		context.Background(),
+	_, err = collection.Indexes().CreateOne(
+		*repositoryContext,
 		mongo.IndexModel{
 			Keys:    bsonx.Doc{{"email", bsonx.Int32(1)}},
 			Options: options.Index().SetUnique(true),
 		},
 	)
 
-	_, err = collection.InsertMany(context.TODO(), docs)
+	_, err = collection.InsertMany(*repositoryContext, docs)
 	return err
 }
 
+//	Use GetClient() before use crud operation
 func ReadUsersPagination(limit int64, page int64) (*[]entity.User, error) {
+	err := checkConnectionProperties()
+	if err != nil {
+		return nil, err
+	}
 	filter := bson.M{}
-	collection := clientRepository.Database(DBName).Collection(CollectionName)
+	collection := repositoryClient.Database(DBName).Collection(CollectionName)
 
 	// Querying paginated data
 	paginatedData, err := mongopagination.New(collection).Limit(limit).Page(page).Filter(filter).Find()
@@ -76,31 +100,44 @@ func ReadUsersPagination(limit int64, page int64) (*[]entity.User, error) {
 	return &users, nil
 }
 
+//	Use GetClient() before use crud operation
 func ReadUserByID(id string) (entity.User, error) {
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	collection := clientRepository.Database(DBName).Collection(CollectionName)
-
 	// Here's user decoded document
 	var result entity.User
-
+	err := checkConnectionProperties()
+	if err != nil {
+		return entity.User{}, err
+	}
+	collection := repositoryClient.Database(DBName).Collection(CollectionName)
 	objectID, err := primitive.ObjectIDFromHex(id)
-	err = collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&result)
+
+	err = collection.FindOne(*repositoryContext, bson.M{"_id": objectID}).Decode(&result)
 	return result, err
 }
 
+//	Use GetClient() before use crud operation
 func CreateUser(doc interface{}) (interface{}, error) {
-	collection := clientRepository.Database(DBName).Collection(CollectionName)
+	err := checkConnectionProperties()
+	if err != nil {
+		return nil, err
+	}
+	collection := repositoryClient.Database(DBName).Collection(CollectionName)
 
-	result, err := collection.InsertOne(context.TODO(), doc)
+	result, err := collection.InsertOne(*repositoryContext, doc)
 	if err != nil {
 		return nil, err
 	}
 	return result.InsertedID, nil
 }
 
+//	Use GetClient() before use crud operation
 func ReplaceUser(objectID primitive.ObjectID, doc interface{}) error {
-	collection := clientRepository.Database(DBName).Collection(CollectionName)
+	err := checkConnectionProperties()
+	if err != nil {
+		return err
+	}
+	collection := repositoryClient.Database(DBName).Collection(CollectionName)
 
-	_, err := collection.ReplaceOne(context.TODO(), bson.M{"_id": objectID}, doc)
+	_, err = collection.ReplaceOne(*repositoryContext, bson.M{"_id": objectID}, doc)
 	return err
 }
