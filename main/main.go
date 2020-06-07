@@ -16,8 +16,8 @@ import (
 var router *gin.Engine
 
 func main() {
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	client := repository.GetClient(&ctx)
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+	client := repository.GetClient()
 	err := client.Ping(ctx, readpref.Primary())
 	if err != nil {
 		log.Fatal("Couldn't connect to the database", err)

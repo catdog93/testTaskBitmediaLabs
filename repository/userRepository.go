@@ -11,6 +11,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
 	"log"
+	"time"
+
 	//"log"
 	"testTaskBitmediaLabs/entity"
 )
@@ -23,61 +25,57 @@ const (
 
 const (
 	nilContextError = "error: context can't be nil"
-	nilClientError  = "error: mongo client can't be nil"
 )
 
 var repositoryClient *mongo.Client
-var repositoryContext *context.Context
 
 //	Create single client and context instances for repository's crud operations
-func GetClient(ctx *context.Context) *mongo.Client {
+func GetClient() *mongo.Client {
 	clientOptions := options.Client().ApplyURI(DBUri)
 	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = client.Connect(*ctx)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
+	err = client.Connect(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 	repositoryClient = client
-	repositoryContext = ctx
 	return client
 }
 
-func checkConnectionProperties() error {
+func checkMongoClient() error {
 	if repositoryClient == nil {
 		return errors.New(nilContextError)
-	}
-	if repositoryContext == nil {
-		return errors.New(nilClientError)
 	}
 	return nil
 }
 
 //	Use GetClient() before use crud operation. When we have JSON with data that are too large it's better use mongoimport
 func InsertUsers(docs []interface{}) error {
-	err := checkConnectionProperties()
+	err := checkMongoClient()
 	if err != nil {
 		return err
 	}
 	collection := repositoryClient.Database(DBName).Collection(CollectionName)
 	//unique index for Email field
+	ctx := context.TODO()
 	_, err = collection.Indexes().CreateOne(
-		*repositoryContext,
+		ctx,
 		mongo.IndexModel{
 			Keys:    bsonx.Doc{{"email", bsonx.Int32(1)}},
 			Options: options.Index().SetUnique(true),
 		},
 	)
 
-	_, err = collection.InsertMany(*repositoryContext, docs)
+	_, err = collection.InsertMany(ctx, docs)
 	return err
 }
 
 //	Use GetClient() before use crud operation
 func ReadUsersPagination(limit int64, page int64) (*[]entity.User, error) {
-	err := checkConnectionProperties()
+	err := checkMongoClient()
 	if err != nil {
 		return nil, err
 	}
@@ -104,26 +102,29 @@ func ReadUsersPagination(limit int64, page int64) (*[]entity.User, error) {
 func ReadUserByID(id string) (entity.User, error) {
 	// Here's user decoded document
 	var result entity.User
-	err := checkConnectionProperties()
+	err := checkMongoClient()
 	if err != nil {
 		return entity.User{}, err
 	}
 	collection := repositoryClient.Database(DBName).Collection(CollectionName)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
 	objectID, err := primitive.ObjectIDFromHex(id)
-
-	err = collection.FindOne(*repositoryContext, bson.M{"_id": objectID}).Decode(&result)
+	if err != nil {
+		return result, err
+	}
+	err = collection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&result)
 	return result, err
 }
 
 //	Use GetClient() before use crud operation
 func CreateUser(doc interface{}) (interface{}, error) {
-	err := checkConnectionProperties()
+	err := checkMongoClient()
 	if err != nil {
 		return nil, err
 	}
 	collection := repositoryClient.Database(DBName).Collection(CollectionName)
-
-	result, err := collection.InsertOne(*repositoryContext, doc)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
+	result, err := collection.InsertOne(ctx, doc)
 	if err != nil {
 		return nil, err
 	}
@@ -132,12 +133,12 @@ func CreateUser(doc interface{}) (interface{}, error) {
 
 //	Use GetClient() before use crud operation
 func ReplaceUser(objectID primitive.ObjectID, doc interface{}) error {
-	err := checkConnectionProperties()
+	err := checkMongoClient()
 	if err != nil {
 		return err
 	}
 	collection := repositoryClient.Database(DBName).Collection(CollectionName)
-
-	_, err = collection.ReplaceOne(*repositoryContext, bson.M{"_id": objectID}, doc)
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
+	_, err = collection.ReplaceOne(ctx, bson.M{"_id": objectID}, doc)
 	return err
 }
