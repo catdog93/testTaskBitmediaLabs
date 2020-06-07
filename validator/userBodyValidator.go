@@ -5,17 +5,18 @@ import (
 	"regexp"
 	"strings"
 	"testTaskBitmediaLabs/entity"
+	"time"
 )
 
 const (
-	stringFieldPattern = "^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z]*)*$"
-	emailPattern       = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
-	lastNameMinLength  = 2
-	lastNameMaxLength  = 40
-	genderMinLength    = 4
-	genderMaxLength    = 10
-	emailMinLength     = 10
-	emailMaxLength     = 40
+	stringFieldPattern   = "^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z]*)*$"
+	stringFieldMinLength = 2
+	stringFieldMaxLength = 40
+	emailPattern         = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
+	emailMinLength       = 10
+	emailMaxLength       = 40
+	genderMinLength      = 4
+	genderMaxLength      = 10
 )
 
 const (
@@ -25,6 +26,8 @@ const (
 	emailFormatError       = "error: email field should be a valid email address"
 	genderError            = "error: gender field requires such values \"Male\" or \"Female\""
 )
+
+const birthDateFormat = "Monday, January 02, 2006 15:04 AM"
 
 func UserValidation(user entity.UserBody) error {
 	err := stringFieldValidation(user.LastName)
@@ -47,6 +50,7 @@ func UserValidation(user entity.UserBody) error {
 	if err != nil {
 		return err
 	}
+	err = birthDateValidation(birthDateFormat, user.BirthDate)
 	return err
 }
 
@@ -55,7 +59,7 @@ func stringFieldValidation(lastName string) error {
 		return errors.New(emptyStringError)
 	}
 	lastName = strings.TrimSpace(lastName)
-	if len(lastName) < lastNameMinLength || len(lastName) > lastNameMaxLength {
+	if len(lastName) < stringFieldMinLength || len(lastName) > stringFieldMaxLength {
 		return errors.New(lengthError)
 	}
 	regex := regexp.MustCompile(stringFieldPattern)
@@ -100,4 +104,9 @@ func genderValidation(gender entity.Gender) error {
 		return errors.New(genderError)
 	}
 	return nil
+}
+
+func birthDateValidation(layout, dateString string) error {
+	_, err := time.Parse(layout, dateString)
+	return err
 }
