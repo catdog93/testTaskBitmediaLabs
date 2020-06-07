@@ -1,4 +1,4 @@
-# testTask written in Go (REST API with gin, MongoDB (mongo-driver))
+# testTask written in Go (REST API with Gin-Gonic, mongodb/mongo-go-driver)
 Test task should be written in Go.
 
 Create API for working with user data using a database
