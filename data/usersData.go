@@ -1,3 +1,4 @@
+// data implements reading Users data from JSON file.
 package data
 
 import (

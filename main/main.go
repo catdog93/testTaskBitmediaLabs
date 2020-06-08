@@ -47,7 +47,7 @@ func CreateUrlMapping() {
 	{
 		routerGroup.POST(controller.UsersPath, controller.CreateUser)
 		routerGroup.GET(controller.UsersPath, controller.GetUsers)
-		routerGroup.GET(controller.GetUserPath, controller.GetUserByID)
-		routerGroup.PUT(controller.UsersPath, controller.ReplaceUser)
+		routerGroup.GET(controller.GetUserByIDPath, controller.GetUserByID)
+		routerGroup.PUT(controller.UsersPath, controller.UpdateUser)
 	}
 }

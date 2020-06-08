@@ -26,6 +26,7 @@ type UserBody struct {
 type Gender string
 
 const (
+	// Preferable values for field Gender
 	Male   Gender = "Male"
 	Female Gender = "Female"
 

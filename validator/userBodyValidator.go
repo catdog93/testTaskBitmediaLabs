@@ -1,3 +1,4 @@
+// Validator declares strict rules for UserBody fields. It's easy to use UserValidation() function for it.
 package validator
 
 import (
@@ -17,6 +18,7 @@ const (
 	emailMaxLength       = 40
 	genderMinLength      = 4
 	genderMaxLength      = 10
+	birthDateFormat      = "Monday, January 02, 2006 15:04 AM"
 )
 
 const (
@@ -27,8 +29,7 @@ const (
 	genderError            = "error: gender field requires such values \"Male\" or \"Female\""
 )
 
-const birthDateFormat = "Monday, January 02, 2006 15:04 AM"
-
+// Single export function for validation UserBody instance
 func UserValidation(user entity.UserBody) error {
 	err := stringFieldValidation(user.LastName)
 	if err != nil {

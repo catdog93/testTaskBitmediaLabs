@@ -1,3 +1,4 @@
+// Controller has required API mapped with endpoints below.
 package controller
 
 import (
@@ -13,7 +14,7 @@ import (
 const (
 	RelativeUsersPath string = "/users"
 	UsersPath         string = "/"
-	GetUserPath       string = "/:id"
+	GetUserByIDPath   string = "/:id"
 )
 
 const (
@@ -26,7 +27,8 @@ const (
 	limitError      = "error: incorrect limit value"
 )
 
-//users/?limit=100&page=5
+// GetUsers() provides pagination data, requires limit number of users per page and number of page
+// Endpoint example: users/?limit=100&page=5
 func GetUsers(context *gin.Context) {
 	limit, err := strconv.Atoi(context.Query("limit"))
 	if err != nil {
@@ -47,7 +49,7 @@ func GetUsers(context *gin.Context) {
 		context.String(http.StatusBadRequest, pageNumberError)
 		return
 	}
-	users, err := service.GetUsersLimit(int64(limit), int64(pageNumber))
+	users, err := service.GetUsersPagination(int64(limit), int64(pageNumber))
 	if err != nil {
 		context.String(http.StatusNotFound, err.Error())
 		return
@@ -55,7 +57,7 @@ func GetUsers(context *gin.Context) {
 	context.JSON(http.StatusOK, users)
 }
 
-// users/5eda0e63a84a6e050000d115
+// Endpoint example: users/5eda0e63a84a6e050000d115
 func GetUserByID(context *gin.Context) {
 	stringURL := context.Request.URL.String()
 	id := path.Base(stringURL)
@@ -71,7 +73,8 @@ func GetUserByID(context *gin.Context) {
 	context.JSON(http.StatusOK, user)
 }
 
-//users/
+// CreateUser() provides validation of request's UserBody. If creation is successful it returns ID in response's body
+// Endpoint example: users/
 func CreateUser(context *gin.Context) {
 	user := entity.UserBody{}
 	err := context.BindJSON(&user)
@@ -92,8 +95,9 @@ func CreateUser(context *gin.Context) {
 	context.JSON(http.StatusCreated, id)
 }
 
-//users/
-func ReplaceUser(context *gin.Context) {
+// CreateUser() provides validation of request's UserBody. If updating is successful it returns ID in response's body
+// Endpoint example: users/
+func UpdateUser(context *gin.Context) {
 	user := entity.User{}
 	err := context.BindJSON(&user)
 	if err != nil {
@@ -105,7 +109,7 @@ func ReplaceUser(context *gin.Context) {
 		context.String(http.StatusBadRequest, err.Error())
 		return
 	}
-	err = service.ReplaceUser(user)
+	err = service.UpdateUser(user)
 	if err != nil {
 		context.String(http.StatusInternalServerError, err.Error())
 		return

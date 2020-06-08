@@ -1,3 +1,4 @@
+// Service is abstract layer between controller and repository. Preferably, it contains some logic here.
 package service
 
 import (
@@ -7,9 +8,8 @@ import (
 	rep "testTaskBitmediaLabs/repository"
 )
 
-const DBUri = "mongodb://localhost:2717"
-
-func GetUsersLimit(limit int64, pageNumber int64) (*[]entity.User, error) {
+// Function provides pagination of users data, requires limit number of users per page and number of page
+func GetUsersPagination(limit int64, pageNumber int64) (*[]entity.User, error) {
 	return rep.ReadUsersPagination(limit, pageNumber)
 }
 
@@ -17,8 +17,10 @@ func GetUserByID(id string) (entity.User, error) {
 	return rep.ReadUserByID(id)
 }
 
+// If it's is successful CreateUser() returns ID of created user
 func CreateUser(user entity.UserBody) (*primitive.ObjectID, error) {
 	var id primitive.ObjectID
+
 	objectID, err := rep.CreateUser(interface{}(user))
 	if err != nil {
 		return nil, err
@@ -32,10 +34,7 @@ func CreateUser(user entity.UserBody) (*primitive.ObjectID, error) {
 	return &id, err
 }
 
-func ReplaceUser(user entity.User) error {
-	err := rep.ReplaceUser(user.ID, interface{}(user))
-	if err != nil {
-		return err
-	}
-	return err
+// One of Update's variant: to replace User using ID
+func UpdateUser(user entity.User) error {
+	return rep.ReplaceUserByID(user.ID, interface{}(user))
 }

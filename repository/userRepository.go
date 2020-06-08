@@ -1,20 +1,18 @@
-//	Use GetClient() before use any crud operation
+//	Repository implement required crud operations with Users collection. Use GetClient() before use any crud operation.
 package repository
 
 import (
 	"context"
 	"errors"
-	mongopagination "github.com/gobeam/mongo-go-pagination"
+	pagination "github.com/gobeam/mongo-go-pagination"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/x/bsonx"
 	"log"
-	"time"
-
-	//"log"
 	"testTaskBitmediaLabs/entity"
+	"time"
 )
 
 const (
@@ -24,12 +22,12 @@ const (
 )
 
 const (
-	nilContextError = "error: context can't be nil"
+	nilMongoClientError = "error: mongo client can't be nil"
 )
 
 var repositoryClient *mongo.Client
 
-//	Create single client and context instances for repository's crud operations
+//	Create single client instance for repository's crud operations. Use GetClient() before use any crud operation.
 func GetClient() *mongo.Client {
 	clientOptions := options.Client().ApplyURI(DBUri)
 	client, err := mongo.NewClient(clientOptions)
@@ -45,14 +43,15 @@ func GetClient() *mongo.Client {
 	return client
 }
 
+// Firstly important to check if mongo client have already existed
 func checkMongoClient() error {
 	if repositoryClient == nil {
-		return errors.New(nilContextError)
+		return errors.New(nilMongoClientError)
 	}
 	return nil
 }
 
-//	Use GetClient() before use crud operation. When we have JSON with data that are too large it's better use mongoimport
+// Func uses collection.InsertMany() for insertion users to DB.
 func InsertUsers(docs []interface{}) error {
 	err := checkMongoClient()
 	if err != nil {
@@ -73,17 +72,16 @@ func InsertUsers(docs []interface{}) error {
 	return err
 }
 
-//	Use GetClient() before use crud operation
+// Implementation of pagination data using gobeam/mongo-go-pagination. It requires number of documents to read and number of page.
 func ReadUsersPagination(limit int64, page int64) (*[]entity.User, error) {
 	err := checkMongoClient()
 	if err != nil {
 		return nil, err
 	}
-	filter := bson.M{}
 	collection := repositoryClient.Database(DBName).Collection(CollectionName)
 
 	// Querying paginated data
-	paginatedData, err := mongopagination.New(collection).Limit(limit).Page(page).Filter(filter).Find()
+	paginatedData, err := pagination.New(collection).Limit(limit).Page(page).Find()
 	if err != nil {
 		return nil, err
 	}
@@ -98,16 +96,15 @@ func ReadUsersPagination(limit int64, page int64) (*[]entity.User, error) {
 	return &users, nil
 }
 
-//	Use GetClient() before use crud operation
+// Function gets User document by ID, decodes it into instance of struct type User and returns it and error if it occurred.
 func ReadUserByID(id string) (entity.User, error) {
-	// Here's user decoded document
 	var result entity.User
 	err := checkMongoClient()
 	if err != nil {
 		return entity.User{}, err
 	}
 	collection := repositoryClient.Database(DBName).Collection(CollectionName)
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return result, err
@@ -116,14 +113,14 @@ func ReadUserByID(id string) (entity.User, error) {
 	return result, err
 }
 
-//	Use GetClient() before use crud operation
+// CreateUser() returns ID of new User document
 func CreateUser(doc interface{}) (interface{}, error) {
 	err := checkMongoClient()
 	if err != nil {
 		return nil, err
 	}
 	collection := repositoryClient.Database(DBName).Collection(CollectionName)
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 	result, err := collection.InsertOne(ctx, doc)
 	if err != nil {
 		return nil, err
@@ -131,14 +128,14 @@ func CreateUser(doc interface{}) (interface{}, error) {
 	return result.InsertedID, nil
 }
 
-//	Use GetClient() before use crud operation
-func ReplaceUser(objectID primitive.ObjectID, doc interface{}) error {
+// One of Update operation's variant: to replace User document by ID
+func ReplaceUserByID(objectID primitive.ObjectID, doc interface{}) error {
 	err := checkMongoClient()
 	if err != nil {
 		return err
 	}
 	collection := repositoryClient.Database(DBName).Collection(CollectionName)
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
+	ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
 	_, err = collection.ReplaceOne(ctx, bson.M{"_id": objectID}, doc)
 	return err
 }
