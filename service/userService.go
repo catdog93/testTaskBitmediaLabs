@@ -36,5 +36,5 @@ func CreateUser(user entity.UserBody) (*primitive.ObjectID, error) {
 
 // One of Update's variant: to replace User using ID
 func UpdateUser(user entity.User) error {
-	return rep.ReplaceUserByID(user.ID, interface{}(user))
+	return rep.ReplaceUserByID(user.ID, user)
 }
