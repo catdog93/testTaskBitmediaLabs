@@ -21,7 +21,7 @@ func GetUserByID(id string) (entity.User, error) {
 func CreateUser(user entity.UserBody) (*primitive.ObjectID, error) {
 	var id primitive.ObjectID
 
-	objectID, err := rep.CreateUser(interface{}(user))
+	objectID, err := rep.CreateUser(user)
 	if err != nil {
 		return nil, err
 	}
