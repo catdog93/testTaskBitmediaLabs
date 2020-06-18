@@ -3,6 +3,7 @@ package data
 
 import (
 	"encoding/json"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"io/ioutil"
 	"path/filepath"
 	"testTaskBitmediaLabs/entity"
@@ -16,7 +17,7 @@ type UsersUnmarshalled struct {
 }
 
 // Function reads data that have JSON format from file
-func ReadJSONData(basePath, targPath string) ([]interface{}, error) {
+func ReadJSONData(basePath, targPath string) ([]entity.User, error) {
 	usersUnmarshalled := UsersUnmarshalled{Users: []entity.UserBody{}}
 	docsPath, err := filepath.Rel(basePath, targPath)
 	if err != nil {
@@ -27,13 +28,15 @@ func ReadJSONData(basePath, targPath string) ([]interface{}, error) {
 		return nil, err
 	}
 	err = json.Unmarshal(byteValues, &usersUnmarshalled)
-	if err != nil {
-		return nil, err
+	users := make([]entity.User, 0, len(usersUnmarshalled.Users))
+	for index, value := range usersUnmarshalled.Users {
+		id := primitive.NewObjectID()
+		users[index].Author = new(entity.Author)
+		users[index].Author.ID = id
+		user := value.ConvertUserBodyToUser()
+		user.ID = id
+		users = append(users, user)
+		users[index].ID = id
 	}
-	docs := make([]interface{}, len(usersUnmarshalled.Users))
-	// replicating original slice to docs
-	for index, _ := range usersUnmarshalled.Users {
-		docs[index] = usersUnmarshalled.Users[index]
-	}
-	return docs, nil
+	return users, err
 }

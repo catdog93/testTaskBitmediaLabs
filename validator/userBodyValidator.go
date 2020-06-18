@@ -31,7 +31,7 @@ const (
 
 // Single export function for validation UserBody instance
 func UserValidation(user entity.UserBody) error {
-	err := stringFieldValidation(user.LastName)
+	err := stringFieldValidation(user.Nickname)
 	if err != nil {
 		return err
 	}
@@ -40,10 +40,6 @@ func UserValidation(user entity.UserBody) error {
 		return err
 	}
 	err = stringFieldValidation(user.Country)
-	if err != nil {
-		return err
-	}
-	err = stringFieldValidation(user.City)
 	if err != nil {
 		return err
 	}
