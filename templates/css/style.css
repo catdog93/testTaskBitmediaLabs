@@ -5,7 +5,7 @@ body {
 	width:100%;
 	color:#959595;
 	font:normal 12px/1.8em Arial, Helvetica, sans-serif;
-	background:url(images/bg.jpg);
+	background:url(files/images/bg.jpg);
 }
 html {
 	padding:0;
@@ -14,7 +14,7 @@ html {
 .main {
 	padding:0;
 	margin:0;
-	background:url(images/main_bg.jpg) repeat-y center;
+	background:url(files/images/main_bg.jpg) repeat-y center;
 }
 .logo {
 	float:left;
@@ -94,7 +94,7 @@ a.rm, a.com {
 	margin:0;
 	padding:15px 5px 15px 0;
 	float:left;
-	background:url(images/menu_line.jpg) repeat-x top;
+	background:url(files/images/menu_line.jpg) repeat-x top;
 }
 .menu_nav ul li a {
 	display:block;
@@ -210,7 +210,7 @@ ul.ex_menu li a:hover {
 }
 .fbg {
 	padding:10px 0;
-	background:url(images/fbg_bg.jpg) repeat-y center;
+	background:url(files/images/fbg_bg.jpg) repeat-y center;
 }
 .fbg_resize {
 	margin:0 auto;
@@ -231,7 +231,7 @@ ul.ex_menu li a:hover {
 .fbg .col {
 	margin:0;
 	float:left;
-	background:url(images/fbg_line.gif) repeat-y right;
+	background:url(files/images/fbg_line.gif) repeat-y right;
 }
 .fbg .c1 {
 	padding:0 15px 0 0;
@@ -254,7 +254,7 @@ ul.ex_menu li a:hover {
 	float:left;
 }
 .footer {
-	background:url(images/main_bg.jpg) repeat-y center;
+	background:url(files/images/main_bg.jpg) repeat-y center;
 }
 .footer_resize {
 	margin:0 auto;

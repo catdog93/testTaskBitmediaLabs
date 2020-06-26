@@ -1,14 +1,22 @@
 package entity
 
 import (
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
 type Post struct {
-	ID           primitive.ObjectID
-	Date         time.Time `json:"date"`
-	TextContent  string    `json:"textContent"`
-	MediaContent string    `json:"mediaContent"`
-	Comments     *[]Comment
+	ID       uint64    `json:"id" binding:"required" bson:"_id"`
+	Date     time.Time `json:"date"`
+	Text     string    `json:"textContent" binding:"required"`
+	ImageURL string    `json:"imageURL" bson:"imageURL"`
+	UserID   uint64    `json:"-" bson:"userID"`
+}
+
+type PostWithEmail struct {
+	//*Post
+	Date     time.Time `json:"date"`
+	Text     string    `json:"textContent" binding:"required"`
+	ImageURL string    `json:"imageURL"`
+
+	Email string `json:"email"`
 }
